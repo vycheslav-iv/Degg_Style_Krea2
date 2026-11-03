@@ -1,0 +1,86 @@
+{
+  "DeggKrea2StyleReference": {
+    "display_name": "Degg Krea2 Style Reference",
+    "description": "Builds a CONDITIONING from a reference image through the Krea2/Qwen3-VL vision path. It does not patch the diffusion model and does not inject latent tokens: the reference is described semantically, so use it for text-to-image with Krea2.",
+    "inputs": {
+      "clip": {
+        "name": "CLIP",
+        "tooltip": "Text encoder loaded with type krea2 (Qwen3-VL). The node calls clip.tokenize(..., images=[...]) so the reference reaches the vision path."
+      },
+      "style_image": {
+        "name": "Style image",
+        "tooltip": "Reference image used ONLY for style: palette, materials, brushwork, light and overall visual language. The depicted subject is not copied unless the prompt asks for it."
+      },
+      "prompt": {
+        "name": "Prompt",
+        "tooltip": "Describe the image you want. The reference already speaks for style, so describe the subject and the scene instead of repeating the reference."
+      },
+      "style_strength": {
+        "name": "Style strength",
+        "tooltip": "How assertively the reference should steer the result. This is wording, not a sampler value: light is conservative, strong is assertive."
+      },
+      "vision_resolution": {
+        "name": "Vision resolution, px",
+        "tooltip": "The reference is scaled to roughly this many pixels per side before it reaches Qwen3-VL. 384 is stable, 512 keeps more detail but costs more time."
+      },
+      "custom_instruction": {
+        "name": "Custom style instruction",
+        "tooltip": "Optional. Leave empty to use the strength preset. When filled it replaces the preset instruction; the target prompt is still appended."
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "conditioning",
+        "tooltip": "Positive conditioning with the reference described by Krea2/Qwen3-VL."
+      }
+    }
+  },
+  "DeggKrea2StyleFusion": {
+    "display_name": "Degg Krea2 Style Fusion",
+    "description": "Adds the target image as a VAE-encoded starting latent on top of the semantic style conditioning. With a low KSampler denoise the subject and composition stay, while the style of the reference image is transferred.",
+    "inputs": {
+      "clip": {
+        "name": "CLIP",
+        "tooltip": "Text encoder loaded with type krea2 (Qwen3-VL). Only the style reference image enters clip.tokenize(..., images=[...])."
+      },
+      "vae": {
+        "name": "VAE",
+        "tooltip": "Krea2/Qwen image VAE. It encodes the target image into the starting latent for KSampler."
+      },
+      "style_image": {
+        "name": "Style image",
+        "tooltip": "Reference image used ONLY for style: palette, materials, brushwork, light and overall visual language. It enters the Qwen3-VL vision path."
+      },
+      "target_image": {
+        "name": "Target image",
+        "tooltip": "Image that supplies subject, pose and composition. It is encoded by the VAE into the starting latent and never enters the CLIP image path."
+      },
+      "prompt": {
+        "name": "Prompt",
+        "tooltip": "Describe the image you want. Describe the target subject and result; do not repeat the reference image subject."
+      },
+      "style_strength": {
+        "name": "Style strength",
+        "tooltip": "How assertively the reference should steer the result. This is wording, not a sampler value; how much structure survives is set by KSampler denoise."
+      },
+      "vision_resolution": {
+        "name": "Vision resolution, px",
+        "tooltip": "The style reference is scaled to roughly this many pixels per side before it reaches Qwen3-VL. 384 is stable, 512 keeps more detail but costs more time."
+      },
+      "custom_instruction": {
+        "name": "Custom style instruction",
+        "tooltip": "Optional. Leave empty to use the strength preset. When filled it replaces the preset instruction; the target prompt is still appended."
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "conditioning",
+        "tooltip": "Positive conditioning with the reference described by Krea2/Qwen3-VL."
+      },
+      "1": {
+        "name": "latent",
+        "tooltip": "Starting latent made from the target image; feed it to KSampler.latent_image."
+      }
+    }
+  }
+}

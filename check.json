@@ -1,0 +1,22 @@
+{
+  "checks": [
+    {
+      "label": "логика нод (Python-песочница)",
+      "cmd": "python tests/_test_style_krea2.py",
+      "expect": ["FAIL: 0", "ТЕСТ ПРОЙДЕН"],
+      "description": "Хелперы без torch: инструкции стиля, нормализация силы, размер зрения, кроп под VAE, порядок вызовов CLIP/VAE, схема входов и выходов, паритет locales en/ru."
+    },
+    {
+      "label": "JS-смоук (vm + comfyAPI-заглушка)",
+      "cmd": "node tests/_smoke_style_krea2.mjs",
+      "expect": ["FAIL: 0", "SMOKE OK"],
+      "description": "Расширение подписывает только две ноды, ставит getOptionLabel, не трогает значения combo, переключает язык по Comfy.Locale.change и снимает трекинг в onRemoved."
+    },
+    {
+      "label": "статический аудит",
+      "cmd": "node tests/_audit_style_krea2.mjs",
+      "expect": ["FAIL: 0", "аудит чист"],
+      "description": "Файлы проекта, EN-источник в Python без кириллицы и CJK, паритет ключей locales, запрещённые приёмы фронтенда, ссылки check.json, README/SPECIFICATION и два workflow без китайского текста."
+    }
+  ]
+}
