@@ -32,7 +32,7 @@ Degg_Style_Krea2/
 └── SPECIFICATION.md
 ```
 
-Тесты и `workflows/` живут в исходнике; `sync.py` копирует только код ноды (`.py`, `.js`, `.json` локалей и `check.json`), без `tests/`, `__pycache__/`, `.git/`.
+Тесты живут только в исходнике; `sync.py` копирует код ноды, локали, `check.json` и `workflows/*.json`, без `tests/`, `__pycache__/`, `.git/`.
 
 ## Механика
 
@@ -82,3 +82,15 @@ Python остаётся EN-источником: в `.py` нет кирилли�
 ## Ограничения
 
 Стиль передаётся описанием Qwen3-VL, а не адаптером: пиксельного совпадения нет, мелкий текст и точные детали референса не переносятся. Работает только с CLIP типа `krea2`. Fusion кропит цель по центру до кратности VAE.
+
+- `style_image` батчем больше 1: в зрительный путь попадает только первый кадр (`qwen_vl.process_qwen2vl_images` берёт `images[0]`). Поведение унаследовано от оригинала; `LoadImage` всегда отдаёт один кадр.
+- В примерах workflow widget-входы не перечислены в `inputs[]` (в стоковых экспортах ComfyUI они есть). Это не мешает загрузке: виджеты строятся из nodeDefs, а `widgets_values` раскладываются позиционно.
+
+## Аудит (2026-11-03)
+
+- **Реальный torch** (embedded python, живые веса `qwen3vl_4b_fp8_scaled.safetensors` + `qwen_image_vae.safetensors`): `_encode_style_conditioning` → `CONDITIONING` `(1, 145, 30720)`, meta `pooled_output`; RU-промпт, `custom_instruction` и `fusion=True` — без ошибок.
+- **Fusion**: `vae.spacial_compression_encode()` = 8, latent `(1, 16, 1, 9, 11)` float32, `finite=True`.
+- **Формат LATENT верный**: Krea2 использует `latent_formats.Wan21` (`latent_dimensions = 3`), а `SingleStreamDiT._forward` принимает и 4D, и 5D (`comfy/ldm/krea2/model.py:299`).
+- **Пример text2img не сломан**: `EmptyLatentImage` даёт 4 канала, но `common_ksampler` вызывает `comfy.sample.fix_empty_latent_channels` — 4ch → 16ch и `unsqueeze(2)` (`comfy/sample.py:45-70`, `nodes.py:1583`).
+- **Локализация живая**: фронтенд 1.57.6 шлёт `Comfy.Locale.change` на `app.ui.settings` (`GraphCanvas.vue` → `dispatchChange`), Vue-комбо читает `options.getOptionLabel` (`WidgetSelectDefault.vue:280`).
+- **Прогон проверок**: Python `ok: 149`, smoke `ok: 32`, аудит `ok: 121` — `FAIL: 0`; `check.py` зелёный.
